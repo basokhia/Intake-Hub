@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE | Intake & Prioritization Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --qt-blue: #002D72;
+            --qt-green: #00A859;
+            --qt-sharp-green: #3DA542;
+            --qt-light-blue: #F0F5FA;
+            --qt-accent-blue: #0068B3;
+            --qt-gray: #F5F5F5;
+            --qt-dark-gray: #2D2D2D;
+        }
+        html {
+             scroll-padding-top: 4rem;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--qt-gray);
+        }
+        .nav-active {
+            color: var(--qt-accent-blue);
+            font-weight: 700;
+        }
+        .flow-line {
+            width: 2px;
+            background-color: #A9D4F2;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .flow-arrow {
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #A9D4F2;
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            transform: translateX(-50%);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 500px;
+            max-height: 550px;
+        }
+        .radar-chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 450px;
+        }
+        .pagination-dot {
+            transition: background-color 0.3s ease;
+        }
+        .pagination-dot.active {
+            background-color: var(--qt-blue);
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-900">
+
+    <header class="bg-white/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-50 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <span class="text-xl font-bold" style="color: var(--qt-blue);">SSE Intake Hub</span>
+                </div>
+                <nav class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#" id="nav-vision" class="nav-link nav-active px-3 py-2 rounded-md text-sm font-medium transition-colors hover:text-[var(--qt-accent-blue)]">The Vision</a>
+                        <a href="#" id="nav-framework" class="nav-link text-gray-600 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:text-[var(--qt-accent-blue)]">Prioritization Framework</a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div id="vision-view">
+        <main class="pt-16">
+            <div id="vision-presentation-container">
+                <!-- Vision Pages will be injected here by JS -->
+            </div>
+            <div id="vision-pagination" class="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 flex justify-between items-center">
+                 <button id="vision-prev" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                 <div id="vision-dots" class="flex space-x-2"></div>
+                 <button id="vision-next" class="text-white font-bold py-2 px-6 rounded-lg transition-colors" style="background-color: var(--qt-green);">Next</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="framework-view" class="hidden">
+        <main class="pt-16">
+             <div id="framework-presentation-container">
+                <!-- Framework pages will be injected here by JS -->
+             </div>
+             <div id="framework-pagination" class="container mx-auto px-4 sm:px-6 lg:px-8 pb-12 flex justify-between items-center">
+                 <button id="framework-prev" class="bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                 <div id="framework-dots" class="flex space-x-2"></div>
+                 <button id="framework-next" class="text-white font-bold py-2 px-6 rounded-lg transition-colors" style="background-color: var(--qt-green);">Next</button>
+            </div>
+        </main>
+    </div>
+
+    <footer style="background-color: var(--qt-dark-gray);" class="border-t">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
+            <h2 class="text-3xl font-bold mb-4" style="color: var(--qt-sharp-green);">Ready to Get Started?</h2>
+            <p class="text-xl text-gray-300 mb-6">The interactive prioritization tool is live and ready to use. Let's start using it today to bring clarity and focus to our work.</p>
+            <a href="https://basokhia.github.io/Prioritization-Tool/" target="_blank" class="inline-block text-white font-bold py-3 px-8 rounded-lg text-lg transition-opacity" style="background-color: var(--qt-green);" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Bookmark the Tool</a>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navVision = document.getElementById('nav-vision');
+            const navFramework = document.getElementById('nav-framework');
+            const visionView = document.getElementById('vision-view');
+            const frameworkView = document.getElementById('framework-view');
+            const visionContainer = document.getElementById('vision-presentation-container');
+            const visionPrevBtn = document.getElementById('vision-prev');
+            const visionNextBtn = document.getElementById('vision-next');
+            const visionDotsContainer = document.getElementById('vision-dots');
+            const frameworkContainer = document.getElementById('framework-presentation-container');
+            const frameworkPrevBtn = document.getElementById('framework-prev');
+            const frameworkNextBtn = document.getElementById('framework-next');
+            const frameworkDotsContainer = document.getElementById('framework-dots');
+            const frameworkPagination = document.getElementById('framework-pagination');
+
+            let valueScoreChartInstance = null;
+            let valueRadarChartInstance = null;
+            let currentVisionPage = 0;
+            let currentFrameworkPage = 0;
+
+            const visionPages = [
+                {
+                    content: `<section class="pt-8 pb-16" style="background-color: var(--qt-dark-gray);"><div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center"><h1 class="text-4xl md:text-5xl font-extrabold" style="color: var(--qt-sharp-green);">Revamping Our Intake Management Process</h1><p class="mt-4 text-xl text-gray-300 max-w-3xl mx-auto">Moving from a reactive state to a proactive, transparent, and efficient system for managing all feature requests.</p></div><div class="container mx-auto px-4 sm:px-6 lg:px-8 mt-12"><div class="rounded-lg p-8" style="background-color: #404040;"><h2 class="text-3xl font-bold text-center mb-8" style="color: var(--qt-sharp-green);">Where We Are Today: A Familiar Story</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-lg"><div class="bg-[#525252] p-6 rounded-lg shadow"><p class="font-semibold text-xl mb-2 text-white">"Why are we working on this right now?"</p><p class="text-gray-300">Leads to unclear goals and a disconnect from strategy.</p></div><div class="bg-[#525252] p-6 rounded-lg shadow"><p class="font-semibold text-xl mb-2 text-white">"Another 'urgent' request just dropped in."</p><p class="text-gray-300">Leads to constant context switching and "priority whiplash."</p></div></div><p class="text-center text-gray-200 mt-8 text-xl">We're constantly fighting fires instead of building strategically.</p></div></div></section>`
+                },
+                {
+                    content: `<section class="py-8"><div class="container mx-auto px-4 sm:px-6 lg:px-8"><div class="text-center"><h2 class="text-3xl font-bold text-center mb-2" style="color: var(--qt-blue);">The Vision: An End-to-End Management Cycle</h2><p class="text-center text-lg max-w-3xl mx-auto text-gray-600 mb-12">Our goal is a fully integrated system with six key phases, starting with a strong foundation.</p></div><div class="relative flex flex-col items-center space-y-8"><div class="w-full max-w-lg bg-white p-6 rounded-lg shadow-md text-center"><div class="text-sm font-bold" style="color: var(--qt-green);">PHASE 1</div><h3 class="text-xl font-bold">Intake Collection</h3><p class="text-gray-600 mb-4">Asking the right questions upfront, using tools like Salesforce for structured intake.</p><img src="https://placehold.co/600x300/F0F5FA/002D72?text=Salesforce+Intake+Form" alt="Salesforce Intake Form" class="rounded-md w-full object-cover"></div><div class="w-16 h-16 relative"><div class="flow-line h-full"></div><div class="flow-arrow"></div></div><div class="w-full max-w-lg bg-white p-6 rounded-lg shadow-md text-center"><div class="text-sm font-bold" style="color: var(--qt-green);">PHASE 2</div><h3 class="text-xl font-bold">Benefit Evaluation</h3><p class="text-gray-600">Building a tool to auto-score requests. The benefit criteria will be based on a live collection of all applicable OKRs, updated periodically to reflect current business goals.</p></div><div class="w-16 h-16 relative"><div class="flow-line h-full"></div><div class="flow-arrow"></div></div><div class="w-full max-w-lg p-6 rounded-lg shadow-xl text-center ring-4" style="background-color: #A9D4F2; border-color: var(--qt-accent-blue);"><div class="text-sm font-bold" style="color: var(--qt-blue);">PHASE 3: OUR STARTING POINT</div><h3 class="text-xl font-bold" style="color: var(--qt-blue);">Prioritization</h3><p style="color: var(--qt-blue);">A logical, quantitative way to order work.</p></div><div class="w-16 h-16 relative"><div class="flow-line h-full"></div><div class="flow-arrow"></div></div><div class="w-full max-w-lg bg-white p-6 rounded-lg shadow-md text-center"><div class="text-sm font-bold" style="color: var(--qt-green);">PHASE 4</div><h3 class="text-xl font-bold">Roadmapping</h3><p class="text-gray-600">Evaluating team commitment, capacity, and effort required to create and adjust the roadmap.</p></div><div class="w-16 h-16 relative"><div class="flow-line h-full"></div><div class="flow-arrow"></div></div><div class="w-full max-w-lg bg-white p-6 rounded-lg shadow-md text-center"><div class="text-sm font-bold" style="color: var(--qt-green);">PHASE 5</div><h3 class="text-xl font-bold">Execution</h3><p class="text-gray-600 mb-4">Surfacing work in Jira with visibility and linking back to the original Salesforce request.</p><img src="https://placehold.co/600x300/F0F5FA/002D72?text=Jira+Execution+Board" alt="Jira Execution Board" class="rounded-md w-full object-cover"></div><div class="w-16 h-16 relative"><div class="flow-line h-full"></div><div class="flow-arrow"></div></div><div class="w-full max-w-lg bg-white p-6 rounded-lg shadow-md text-center"><div class="text-sm font-bold" style="color: var(--qt-green);">PHASE 6</div><h3 class="text-xl font-bold">Automation</h3><p class="text-gray-600">Managing the interfaces between each phase to create a seamless, automated workflow.</p></div></div></div></section>`
+                }
+            ];
+             const frameworkPages = [
+                {
+                    content: `<section class="container mx-auto p-4 md:p-8 max-w-5xl"><header class="text-center my-12"><h1 class="text-4xl md:text-5xl font-extrabold" style="color: var(--qt-blue);">Feature Prioritization Framework</h1><p class="text-xl text-gray-600 mt-2">An Objective, Data-Driven Model</p></header><section class="bg-white rounded-lg shadow-lg p-8 mb-16"><h2 class="text-3xl font-bold text-center mb-6" style="color: var(--qt-blue);">The Problem: Which Feature Should We Build Next?</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg text-gray-700"><div class="flex items-start space-x-3"><span class="text-2xl" style="color: var(--qt-green);">❌</span><p><strong class="font-semibold">Subjective Decisions:</strong> The "loudest voice" often wins over strategic alignment.</p></div><div class="flex items-start space-x-3"><span class="text-2xl" style="color: var(--qt-green);">❌</span><p><strong class="font-semibold">Conflicting Priorities:</strong> Different business units have valid but competing needs.</p></div><div class="flex items-start space-x-3"><span class="text-2xl" style="color: var(--qt-green);">❌</span><p><strong class="font-semibold">Lack of Transparency:</strong> It's not always clear *why* one feature is chosen over another.</p></div><div class="flex items-start space-x-3"><span class="text-2xl" style="color: var(--qt-green);">❌</span><p><strong class="font-semibold">Inefficient Process:</strong> Debating priorities in meetings can be time-consuming.</p></div></div></section><section class="text-white rounded-lg shadow-xl p-8 mb-16" style="background-color: var(--qt-blue);"><h2 class="text-3xl font-bold text-center mb-6">The Solution: A Simple, Powerful Formula</h2><p class="text-center text-lg max-w-3xl mx-auto mb-8 text-gray-200">Our framework brings objectivity by ensuring we focus on delivering the most <strong class="font-semibold">value</strong> for the least amount of <strong class="font-semibold">effort</strong>.</p><div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-6 text-2xl font-bold text-center"><div class="bg-white p-6 rounded-lg shadow-md" style="color: var(--qt-blue);">Weighted Value Score</div><div class="text-4xl font-light text-gray-400">/</div><div class="bg-white p-6 rounded-lg shadow-md" style="color: var(--qt-blue);">Effort Score</div><div class="text-4xl font-light text-gray-400">=</div><div class="text-white p-6 rounded-lg shadow-md" style="background-color: var(--qt-accent-blue);">Priority Score</div></div></section></section>`
+                },
+                {
+                    content: `<section class="container mx-auto p-4 md:p-8 max-w-5xl"><section class="bg-white rounded-lg shadow-lg p-8 mb-16"><h2 class="text-3xl font-bold text-center mb-2" style="color: var(--qt-blue);">Deep Dive: The Value Score</h2><p class="text-center text-lg max-w-3xl mx-auto text-gray-600 mb-8">The Value Score is a weighted sum based on ten key business drivers. This chart shows the relative importance (weight) of each criterion in the final calculation.</p><div class="chart-container"><canvas id="valueScoreChart"></canvas></div></section><section class="bg-white rounded-lg shadow-lg p-8 mb-16"><h2 class="text-3xl font-bold text-center mb-2" style="color: var(--qt-blue);">Visualizing Value: A Sample Feature Profile</h2><p class="text-center text-lg max-w-3xl mx-auto text-gray-600 mb-8">A radar chart helps visualize a feature's raw scores across all dimensions, providing a quick understanding of a feature's strengths before weighting is applied.</p><div class="radar-chart-container"><canvas id="valueRadarChart"></canvas></div></section></section>`
+                },
+                 {
+                    content: `<section class="container mx-auto p-4 md:p-8 max-w-5xl"><section class="bg-white rounded-lg shadow-lg p-8 mb-16"><h2 class="text-3xl font-bold text-center mb-2" style="color: var(--qt-blue);">Deep Dive: The Effort Score</h2><p class="text-center text-lg max-w-3xl mx-auto text-gray-600 mb-8">Effort is a high-level estimate of the work required. We use T-shirt sizes to keep estimates simple, fast, and relative.</p><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center"><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block" style="color: var(--qt-green);">Y</strong> Up to 5 days</div><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block" style="color: var(--qt-green);">XS</strong> 6-15 days</div><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block text-yellow-500">S</strong> 16-35 days</div><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block text-yellow-500">M</strong> 36-90 days</div><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block text-red-500">L</strong> 91-150 days</div><div class="bg-gray-100 p-4 rounded-lg"><strong class="text-2xl font-bold block text-red-500">XL</strong> >150 days</div></div></section><section class="bg-white rounded-lg shadow-lg p-8 mb-16"><h2 class="text-3xl font-bold text-center mb-8" style="color: var(--qt-blue);">Key Benefits of Using the Framework</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-lg"><div class="flex items-center space-x-4"><span class="text-4xl">🎯</span><div><h4 class="font-bold">Objectivity</h4><p class="text-gray-600">Replaces subjective opinions with a consistent, data-driven model.</p></div></div><div class="flex items-center space-x-4"><span class="text-4xl">🔍</span><div><h4 class="font-bold">Transparency</h4><p class="text-gray-600">Everyone can see how scores are calculated and why features are prioritized.</p></div></div><div class="flex items-center space-x-4"><span class="text-4xl">🤝</span><div><h4 class="font-bold">Alignment</h4><p class="text-gray-600">Ensures development effort is focused on what matters most to the business.</p></div></div><div class="flex items-center space-x-4"><span class="text-4xl">⚡️</span><div><h4 class="font-bold">Efficiency</h4><p class="text-gray-600">Drastically reduces time spent in prioritization meetings and debates.</p></div></div></div></section><section class="text-center my-8"><h3 class="text-2xl font-bold" style="color: var(--qt-blue);">Ready to Apply the Framework?</h3><p class="text-lg text-gray-600 mt-2 mb-6">Use the interactive tool to score your features and build your prioritized backlog.</p><a href="https://basokhia.github.io/Prioritization-Tool/" target="_blank" class="inline-block text-white font-bold py-3 px-8 rounded-lg text-lg transition-opacity" style="background-color: var(--qt-green);" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Launch the Prioritization Tool</a></section></section>`
+                }
+            ];
+
+            function renderVisionPage() {
+                const pageData = visionPages[currentVisionPage];
+                visionContainer.innerHTML = pageData.content;
+                visionPrevBtn.disabled = currentVisionPage === 0;
+                visionNextBtn.textContent = (currentVisionPage === visionPages.length - 1) ? 'Go to Framework' : 'Next';
+                updateDots(visionDotsContainer, visionPages.length, currentVisionPage);
+            }
+             function renderFrameworkPage() {
+                const pageData = frameworkPages[currentFrameworkPage];
+                frameworkContainer.innerHTML = pageData.content;
+                
+                frameworkPagination.classList.remove('hidden');
+
+                if (currentFrameworkPage === frameworkPages.length - 1) {
+                    frameworkNextBtn.classList.add('hidden');
+                } else {
+                    frameworkNextBtn.classList.remove('hidden');
+                }
+
+                frameworkPrevBtn.disabled = currentFrameworkPage === 0;
+                updateDots(frameworkDotsContainer, frameworkPages.length, currentFrameworkPage);
+                
+                if (valueScoreChartInstance) { valueScoreChartInstance.destroy(); }
+                if (valueRadarChartInstance) { valueRadarChartInstance.destroy(); }
+
+                if (currentFrameworkPage === 1) {
+                    initFrameworkCharts();
+                }
+            }
+
+            function updateDots(container, totalPages, currentPage) {
+                container.innerHTML = '';
+                for (let i = 0; i < totalPages; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = `w-3 h-3 rounded-full bg-gray-300 pagination-dot ${i === currentPage ? 'active' : ''}`;
+                    container.appendChild(dot);
+                }
+            }
+
+            visionNextBtn.addEventListener('click', () => {
+                if (currentVisionPage < visionPages.length - 1) {
+                    currentVisionPage++;
+                    renderVisionPage();
+                } else {
+                    switchView('framework');
+                }
+            });
+            visionPrevBtn.addEventListener('click', () => {
+                if (currentVisionPage > 0) {
+                    currentVisionPage--;
+                    renderVisionPage();
+                }
+            });
+            frameworkNextBtn.addEventListener('click', () => {
+                if (currentFrameworkPage < frameworkPages.length - 1) {
+                    currentFrameworkPage++;
+                    renderFrameworkPage();
+                }
+            });
+            frameworkPrevBtn.addEventListener('click', () => {
+                if (currentFrameworkPage > 0) {
+                    currentFrameworkPage--;
+                    renderFrameworkPage();
+                }
+            });
+
+            function switchView(view) {
+                if (view === 'framework') {
+                    visionView.classList.add('hidden');
+                    frameworkView.classList.remove('hidden');
+                    navVision.classList.remove('nav-active');
+                    navFramework.classList.add('nav-active');
+                    currentFrameworkPage = 0;
+                    renderFrameworkPage();
+                } else {
+                    frameworkView.classList.add('hidden');
+                    visionView.classList.remove('hidden');
+                    navFramework.classList.remove('nav-active');
+                    navVision.classList.add('nav-active');
+                    currentVisionPage = 0;
+                    renderVisionPage();
+                }
+                window.scrollTo(0, 0);
+            }
+
+            navVision.addEventListener('click', (e) => { e.preventDefault(); switchView('vision'); });
+            navFramework.addEventListener('click', (e) => { e.preventDefault(); switchView('framework'); });
+            
+            function wrapLabel(label) {
+                const maxLength = 16;
+                if (label.length <= maxLength) return label;
+                const words = label.split(' ');
+                let lines = [];
+                let currentLine = '';
+                words.forEach(word => { if ((currentLine + word).length > maxLength) { lines.push(currentLine.trim()); currentLine = ''; } currentLine += word + ' '; });
+                lines.push(currentLine.trim());
+                return lines;
+            }
+
+            function initFrameworkCharts() {
+                const barCtx = document.getElementById('valueScoreChart')?.getContext('2d');
+                if (barCtx) {
+                    const data = {
+                        labels: ['Journey/LOB OKRs', 'Team OKRs', 'Customer Experience', 'Security Alignment', 'Compliance Alignment', 'Revenue Impact', 'OPEX Savings', 'Urgency', 'SSE OKRs', 'Agent/Employee Experience'],
+                        datasets: [{
+                            label: 'Criterion Weight',
+                            data: [3, 2, 2, 2, 2, 2, 2, 2, 1, 1],
+                            backgroundColor: ['#002D72', '#0068B3', '#0068B3', '#0068B3', '#0068B3', '#0068B3', '#0068B3', '#0068B3', '#00A859', '#00A859'],
+                            borderColor: 'rgba(255, 255, 255, 0.5)',
+                            borderWidth: 1
+                        }]
+                    };
+                    valueScoreChartInstance = new Chart(barCtx, {
+                        type: 'bar',
+                        data: data,
+                        options: {
+                            indexAxis: 'y', maintainAspectRatio: false, responsive: true,
+                            scales: { x: { beginAtZero: true, grid: { display: false }, ticks: { font: { weight: 'bold' } } }, y: { grid: { display: false }, ticks: { font: { size: 14 } } } },
+                            plugins: { legend: { display: false }, tooltip: { enabled: true, callbacks: { title: function(tooltipItems) { const item = tooltipItems[0]; let label = item.chart.data.labels[item.dataIndex]; return Array.isArray(label) ? label.join(' ') : label; } } } }
+                        }
+                    });
+                }
+                
+                const radarCtx = document.getElementById('valueRadarChart')?.getContext('2d');
+                if(radarCtx) {
+                     const radarLabels = ['J/LOB OKRs', 'Team OKRs', 'CX', 'Security', 'Compliance', 'Revenue', 'OPEX', 'Urgency', 'SSE OKRs', 'EX'].map(l => wrapLabel(l));
+                     valueRadarChartInstance = new Chart(radarCtx, {
+                        type: 'radar',
+                        data: {
+                            labels: radarLabels,
+                            datasets: [{
+                                label: 'Sample Feature: "Improve Security Dashboard"',
+                                data: [3, 2, 4, 4, 3, 2, 3, 2, 3, 1],
+                                backgroundColor: 'rgba(0, 168, 89, 0.2)',
+                                borderColor: 'rgba(0, 168, 89, 1)',
+                                pointBackgroundColor: 'rgba(0, 168, 89, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(0, 168, 89, 1)',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            scales: { r: { angleLines: { color: '#E0E0E0' }, grid: { color: '#E0E0E0' }, pointLabels: { font: { size: 12 }, color: '#455A64' }, ticks: { backdropColor: '#F5F5F5', color: '#607D8B', stepSize: 1 }, suggestedMin: 0, suggestedMax: 4 } },
+                            plugins: {
+                                legend: { position: 'top', labels: { color: '#455A64', font: { size: 14, weight: '500' } } },
+                                tooltip: { callbacks: { title: function(tooltipItems) { const item = tooltipItems[0]; let label = item.chart.data.labels[item.dataIndex]; return Array.isArray(label) ? label.join(' ') : label; } } }
+                            }
+                        }
+                    });
+                }
+            }
+            renderVisionPage();
+        });
+    </script>
+
+</body>
+</html>
+
